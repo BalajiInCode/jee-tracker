@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Balaji's JEE Tracker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      text-align: center;
+      background-color: #343a40;
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    section {
+      background: #ffffff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    input, select {
+      padding: 6px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-top: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .motivation {
+      font-style: italic;
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Balaji – JEE Aspirant</h1>
+    <p>Your Personal JEE Study Tracker</p>
+  </header>
+
+  <div class="motivation" id="motivation"></div>
+
+  <section>
+    <h2>📚 Chapter Progress Tracker</h2>
+    <table id="topicTable">
+      <thead>
+        <tr>
+          <th>Topic</th>
+          <th>Status</th>
+          <th>Last Revised</th>
+          <th>Confidence (1–5)</th>
+          <th>Total Revisions</th>
+          <th>Edit</th>
+          <th>Remove</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <br />
+    <input type="text" id="topic" placeholder="Topic" />
+    <select id="status">
+      <option value="Done">Done</option>
+      <option value="Pending">Pending</option>
+    </select>
+    <input type="text" id="date" placeholder="Last Revised" />
+    <input type="number" id="confidence" placeholder="1–5" min="1" max="5" />
+    <input type="number" id="revisions" placeholder="Total Revisions" min="0" />
+    <button onclick="addTopic()">Add Topic</button>
+  </section>
+
+  <script>
+    const motivations = [
+      "Success is the sum of small efforts, repeated day in and day out. – Robert Collier",
+      "Push yourself, because no one else is going to do it for you.",
+      "The future depends on what you do today. – Mahatma Gandhi",
+      "Don’t watch the clock; do what it does. Keep going. – Sam Levenson",
+      "Dream it. Believe it. Achieve it."
+    ];
+
+    function showMotivation() {
+      const moti = motivations[Math.floor(Math.random() * motivations.length)];
+      document.getElementById('motivation').innerText = moti;
+    }
+
+    function loadTopics() {
+      const saved = localStorage.getItem('jeeTopics');
+      if (saved) {
+        const data = JSON.parse(saved);
+        data.forEach(item => insertRow(item.topic, item.status, item.date, item.confidence, item.revisions || 0));
+      }
+    }
+
+    function sortAndSave() {
+      const rows = document.querySelectorAll('#topicTable tbody tr');
+      const data = Array.from(rows).map(row => {
+        const cells = row.querySelectorAll('td');
+        return {
+          topic: cells[0].innerText,
+          status: cells[1].innerText,
+          date: cells[2].innerText,
+          confidence: cells[3].innerText,
+          revisions: parseInt(cells[4].innerText) || 0
+        };
+      });
+      localStorage.setItem('jeeTopics', JSON.stringify(data));
+    }
+
+    function insertRow(topic, status, date, confidence, revisions = 0) {
+      const table = document.getElementById('topicTable').getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      row.innerHTML = `
+        <td>${topic}</td>
+        <td>${status}</td>
+        <td>${date || '–'}</td>
+        <td>${confidence || '–'}</td>
+        <td>${revisions}</td>
+        <td><button onclick="editRow(this)">Edit</button></td>
+        <td><button onclick="removeRow(this)">X</button></td>
+      `;
+    }
+
+    function addTopic() {
+      const topic = document.getElementById('topic').value;
+      const status = document.getElementById('status').value;
+      const date = document.getElementById('date').value;
+      const confidence = document.getElementById('confidence').value;
+      const revisions = document.getElementById('revisions').value || 0;
+
+      if (!topic) return;
+      insertRow(topic, status, date, confidence, revisions);
+      sortAndSave();
+
+      document.getElementById('topic').value = '';
+      document.getElementById('status').value = 'Done';
+      document.getElementById('date').value = '';
+      document.getElementById('confidence').value = '';
+      document.getElementById('revisions').value = '';
+    }
+
+    function removeRow(button) {
+      const row = button.parentElement.parentElement;
+      row.remove();
+      sortAndSave();
+    }
+
+    function editRow(button) {
+      const row = button.parentElement.parentElement;
+      const cells = row.querySelectorAll("td");
+
+      const status = cells[1].innerText;
+      const date = cells[2].innerText !== "–" ? cells[2].innerText : "";
+      const confidence = cells[3].innerText !== "–" ? cells[3].innerText : "";
+      const revisions = cells[4].innerText;
+
+      cells[1].innerHTML = `
+        <select>
+          <option ${status === "Done" ? "selected" : ""}>Done</option>
+          <option ${status === "Pending" ? "selected" : ""}>Pending</option>
+        </select>
+      `;
+      cells[2].innerHTML = `<input type="date" value="${date}">`;
+      cells[3].innerHTML = `<input type="number" min="1" max="5" value="${confidence}">`;
+      cells[4].innerHTML = `<input type="number" min="0" value="${revisions}">`;
+
+      button.innerText = "Save";
+      button.onclick = () => saveEdit(row, button);
+    }
+
+    function saveEdit(row, button) {
+      const selects = row.querySelectorAll("select");
+      const inputs = row.querySelectorAll("input");
+
+      const status = selects[0].value;
+      const date = inputs[0].value || "–";
+      const confidence = inputs[1].value || "–";
+      const revisions = inputs[2].value || "0";
+
+      row.cells[1].innerText = status;
+      row.cells[2].innerText = date;
+      row.cells[3].innerText = confidence;
+      row.cells[4].innerText = revisions;
+
+      button.innerText = "Edit";
+      button.onclick = () => editRow(button);
+      sortAndSave();
+    }
+
+    window.onload = () => {
+      loadTopics();
+      showMotivation();
+    };
+  </script>
+</body>
+</html>
